@@ -3,12 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   toggleComplete,
   removeTodo,
+  editTodo,
   setFilter,
   setSearchTerm,
 } from "../store/todo/todoSlice";
 import toast from "react-hot-toast";
 import AddTodo from "./AddTodo";
 import Modal from "./Modal";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const TodoList = () => {
   const dispatch = useDispatch();
@@ -17,12 +19,14 @@ const TodoList = () => {
   const searchTerm = useSelector((state) => state.searchTerm);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editTodoId, setEditTodoId] = useState(null);
 
   const filteredTodos = todos
     .filter((todo) => {
       if (filter === "All") return true;
       if (filter === "Active") return !todo.completed;
       if (filter === "Completed") return todo.completed;
+      return false;
     })
     .filter((todo) =>
       todo.text.toLowerCase().includes(searchTerm.toLowerCase())
@@ -37,6 +41,10 @@ const TodoList = () => {
     toast.success("Todo removed successfully");
   };
 
+  const handleEditTodo = (todo) => {
+    setEditTodoId(todo.id);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col items-center p-4 bg-zinc-900 rounded-lg shadow-md m-3">
@@ -58,8 +66,11 @@ const TodoList = () => {
           <option value="Completed">Completed</option>
         </select>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className=" bg-green-400 hover:bg-green-500 text-green-950  min-w-[150px] px-4 py-2 rounded-lg shadow-md mb-4"
+          onClick={() => {
+            setEditTodoId(null);
+            setIsModalOpen(true);
+          }}
+          className="bg-green-400 hover:bg-green-500 text-green-950 min-w-[150px] px-4 py-2 rounded-lg shadow-md mb-4"
         >
           Add Todo
         </button>
@@ -91,7 +102,7 @@ const TodoList = () => {
                   <td
                     className={`py-2 px-4 ${
                       todo.completed ? "line-through text-gray-500" : ""
-                    } `}
+                    }`}
                   >
                     {todo.text}
                   </td>
@@ -112,17 +123,22 @@ const TodoList = () => {
                       type="checkbox"
                       checked={todo.completed}
                       onChange={() => dispatch(toggleComplete(todo.id))}
-                      className="form-checkbox"
+                      className="form-checkbox p-2 w-5 h-5"
                     />
                   </td>
 
-                  <td className="py-2 px-4">
-                    <button
-                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                  <td className="py-2 px-4 flex flex-row items-center gap-2">
+                    <FaEdit
+                      className="m-1 text-gray-400"
+                      onClick={() => handleEditTodo(todo)}
+                      
+                      size={20}
+                    />
+                    <FaTrash
+                      className="m-1 text-red-400"
+                      size={20}
                       onClick={() => handleDeleteTodo(todo.id)}
-                    >
-                      Delete
-                    </button>
+                    />
                   </td>
                 </tr>
               ))
@@ -131,10 +147,24 @@ const TodoList = () => {
         </table>
       </div>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <AddTodo onClose={() => setIsModalOpen(false)}/>
+        <AddTodo
+          onClose={() => setIsModalOpen(false)}
+          editTodoId={editTodoId}
+        />
       </Modal>
     </div>
   );
 };
 
 export default TodoList;
+
+
+
+
+
+
+
+
+
+
+

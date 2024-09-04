@@ -1,13 +1,25 @@
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { addTodo } from "../store/todo/todoSlice";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addTodo, editTodo } from "../store/todo/todoSlice";
 import toast from "react-hot-toast";
 
-const AddTodo = ({ onClose }) => {
+const AddTodo = ({ onClose, editTodoId }) => {
+  const dispatch = useDispatch();
+  const todos = useSelector((state) => state.todos);
+  
+  const todoToEdit = todos.find((todo) => todo.id === editTodoId);
+
   const [text, setText] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState("Medium");
-  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (todoToEdit) {
+      setText(todoToEdit.text);
+      setDueDate(todoToEdit.dueDate || "");
+      setPriority(todoToEdit.priority);
+    }
+  }, [todoToEdit]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,17 +28,14 @@ const AddTodo = ({ onClose }) => {
       return;
     }
 
-    setTimeout(() => {
-      if (Notification.permission === "granted") {
-        new Notification("Todo Reminder", {
-          body: `Your Todo added : ${text}`,
-          icon: "https://cdn-icons-png.flaticon.com/128/2387/2387679.png", // Optional
-        });
-      }
-    }, 1000);
+    if (editTodoId) {
+      dispatch(editTodo({ id: editTodoId, newText: text, newDueDate: dueDate, newPriority: priority }));
+      toast.success("Todo updated successfully");
+    } else {
+      dispatch(addTodo({ text, dueDate, priority }));
+      toast.success("Todo added successfully");
+    }
 
-    dispatch(addTodo({ text, dueDate, priority }));
-    toast.success("Todo added successfully");
     setText("");
     setDueDate("");
     setPriority("Medium");
@@ -77,8 +86,8 @@ const AddTodo = ({ onClose }) => {
               Priority
             </label>
             <select
-              id="priority"
               className="shadow border border-gray-700 rounded w-full py-2 px-3 bg-zinc-900 text-gray-400"
+              id="priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
             >
@@ -87,13 +96,20 @@ const AddTodo = ({ onClose }) => {
               <option value="High">High</option>
             </select>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex justify-between">
             <button
-              className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              type="button"
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              type="submit"
               onClick={handleSubmit}
             >
-              Add Todo
+              {editTodoId ? "Update Todo" : "Add Todo"}
+            </button>
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              type="button"
+              onClick={onClose}
+            >
+              Cancel
             </button>
           </div>
         </form>
