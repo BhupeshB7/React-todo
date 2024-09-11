@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addTodo, editTodo } from "../store/todo/todoSlice";
+import { DatePicker } from "antd";
 import toast from "react-hot-toast";
-
+import "antd/dist/reset.css";
 const AddTodo = ({ onClose, editTodoId }) => {
   const dispatch = useDispatch();
   const todos = useSelector((state) => state.todos);
-  
+
   const todoToEdit = todos.find((todo) => todo.id === editTodoId);
 
   const [text, setText] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(null);
   const [priority, setPriority] = useState("Medium");
 
   useEffect(() => {
     if (todoToEdit) {
       setText(todoToEdit.text);
-      setDueDate(todoToEdit.dueDate || "");
+      setDueDate(todoToEdit.dueDate ? moment(todoToEdit.dueDate) : null);
       setPriority(todoToEdit.priority);
     }
   }, [todoToEdit]);
@@ -28,16 +29,25 @@ const AddTodo = ({ onClose, editTodoId }) => {
       return;
     }
 
+    const formattedDate = dueDate ? dueDate.format("MM/DD/YYYY") : "";
+
     if (editTodoId) {
-      dispatch(editTodo({ id: editTodoId, newText: text, newDueDate: dueDate, newPriority: priority }));
+      dispatch(
+        editTodo({
+          id: editTodoId,
+          newText: text,
+          newDueDate: formattedDate,
+          newPriority: priority,
+        })
+      );
       toast.success("Todo updated successfully");
     } else {
-      dispatch(addTodo({ text, dueDate, priority }));
+      dispatch(addTodo({ text, dueDate: formattedDate, priority }));
       toast.success("Todo added successfully");
     }
 
     setText("");
-    setDueDate("");
+    setDueDate(null);
     setPriority("Medium");
     if (onClose) onClose(); // Close the modal
   };
@@ -54,7 +64,7 @@ const AddTodo = ({ onClose, editTodoId }) => {
               Todo
             </label>
             <input
-              className="shadow border border-gray-700 rounded w-full py-2 px-3 bg-zinc-900 text-gray-400"
+              className="shadow border border-gray-700 rounded focus:ring-[2px] focus:ring-green-400 focus:outline-none w-full py-2 px-3 bg-zinc-900 text-gray-400"
               id="todo"
               type="text"
               placeholder="Todo"
@@ -70,13 +80,14 @@ const AddTodo = ({ onClose, editTodoId }) => {
             >
               Due Date
             </label>
-            <input
-              className="shadow border border-gray-700 rounded w-full py-2 px-3 bg-zinc-900 text-gray-400"
-              id="dueDate"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
+              <DatePicker
+                id="dueDate"
+                value={dueDate}
+                onChange={(date) => setDueDate(date)}
+                format="MM/DD/YYYY"
+                className="shadow border hover:bg-zinc-900  border-gray-700 rounded focus:ring-[2px] focus:ring-green-400 focus:outline-none w-full py-2 px-3 bg-zinc-900 text-gray-400"
+            
+              />
           </div>
           <div className="mb-4">
             <label
